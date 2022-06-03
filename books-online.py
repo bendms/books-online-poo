@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
 import csv
-"""
+
 ##### FONCTION POUR FAIRE UNE REQUETE GET POUR OBTENIR LE CODE HTML DE LA PAGE #####
 
 def make_the_soup(url_livre):
@@ -82,23 +82,15 @@ def write_in_csv (category, informations_livre):
         writer.writerows(liste_csv)
     #Enregistrer et fermer le fichier CSV
  
-
+urls = [] #Création d'une liste pour récupérer les URL de la page
 url_livre = "https://books.toscrape.com/catalogue/soumission_998/index.html"
 soup = make_the_soup(url_livre)
 informations_livre  = scrap_my_book(url_livre, soup)[0]
 category = scrap_my_book(url_livre,soup)[1]
 write_in_csv(category, informations_livre)
-"""
 
 
-urls = []
-for link in soup.find_all('a'):
-    #print(link.get('href'))
-    urls.append(link)
-print(urls)
 
-list = soup.find_all(class_="table table-striped")
-print(list)
 
 # Récupérer toutes les URL des produits via BeautifulSoup 
 # Faire une requête Get pour obtenir le code HTML des pages suivantes si il y a
@@ -110,17 +102,32 @@ print(list)
 
 links = []
 
+# for link in soup.find_all('a'):
+#     #print(link.get('href'))
+#     urls.append(link)
+#     print(link)
+# # list = soup.find_all(class_="table table-striped")
+# # print(list)
+
 #À partir d’une URL, faire une requête Get pour obtenir le code HTML de la page
 
-url = "https://books.toscrape.com/catalogue/category/books/fiction_10/index.html"
+url = "https://books.toscrape.com/catalogue/category/books/romance_8/index.html"
 page = requests.get(url)
 i = 0
 
+
+#FAIRE LA LISTE DES LIVRES SUR LE PAGE TODO: PARCOURIR LES PAGES
 while page.ok:
     page = requests.get(url)
     #Parcourir la page
     soup = BeautifulSoup(page.text, 'html.parser')
     product_pods = soup.find_all(class_="product_pod")
+    # pager = soup.find(class_ = "next")[]
+    # print(pager)
+    # href_tags = soup.find_all(href=True)
+    # print(href_tags)
+    # next_link = href_tags[0]
+    # print(next_link)
     for product_pod in product_pods:
         a = product_pod.find("a")
         link = a["href"]
@@ -128,9 +135,15 @@ while page.ok:
         with open('liste_livres.txt', 'w', encoding='UTF-8') as f:
             writer = csv.writer(f)
             writer.writerow(links)
-    print("Scraping des liens en cours ... \n page " + str(i))
-    url = "http://books.toscrape.com/catalogue/page-" + str(i) + ".html" 
+    #print("Scraping des liens en cours ... \n page " + str(i))
     i = i + 1
+
+    # a = pager.find("a")
+    # next_link = a["href"]
+    # print(next_link)
+    url = "http://books.toscrape.com/catalogue/category/books/page-" + str(i) + ".html" 
+
+
 
 # # Pour chaque élement de la liste (liste_livre), récupérer la page HTML
 # # Créer les liste suivantes :
@@ -145,9 +158,3 @@ while page.ok:
 # - category
 # - review_rating
 # - image_url
-
-
-
-
-
-
