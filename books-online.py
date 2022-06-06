@@ -1,23 +1,25 @@
 from bs4 import BeautifulSoup
 import requests
 import csv
+from urllib.parse import urljoin
 
 ##### FONCTION POUR FAIRE UNE REQUETE GET POUR OBTENIR LE CODE HTML DE LA PAGE #####
 
-def make_the_soup(url_livre):
-    # url_website = url_livre
-    html_livre = requests.get(url_livre).text
-    soup = BeautifulSoup(html_livre, 'html.parser')
-    return soup
+# def MakeTheSoup(url_livre):
+#     # url_website = url_livre
+#     html_livre = requests.get(url_livre).text
+#     soup = BeautifulSoup(html_livre, 'html.parser')
+#     return soup
 
 ##### FONCTION POUR SCRAPER LA PAGE D'UN LIVRE #####
 
-def scrap_my_book (url_livre, soup):
+def ScrapMyBook (url_livre, soup=None):
+    """test"""
     #Pour chaque URL de liste livre, utiliser BeautifulSoup pour extraire les données et les stocker dans les listes
     tableau_livre = []
     html_livre = requests.get(url_livre).text
     soup_livre = BeautifulSoup(html_livre, 'html.parser')
-
+  
     #URL Livre 
     product_page_url = url_livre
 
@@ -31,7 +33,6 @@ def scrap_my_book (url_livre, soup):
         list_a.append(a_href.string)
     category = list_a[3]
     
-
     #Description
     description_class_search = soup_livre.find(class_="product_page")
     children_product_page = description_class_search.findChildren('p', recursive = False)
@@ -54,7 +55,7 @@ def scrap_my_book (url_livre, soup):
     number_available = tableau_livre[5]
 
     #Extraction de l'URL de l'image
-    image_livre = soup.select("div img")
+    image_livre = soup_livre.select("div img")
     image_url = url_livre + image_livre[0]["src"]
     download_image = requests.get(image_url).content
     with open("test_img.jpg", "wb") as handler:
@@ -64,10 +65,22 @@ def scrap_my_book (url_livre, soup):
     
     return informations_livre, category
 
+##### VÉRIFIER SI LA PAGE EN COURS POSSÈDE UN BOUTON PAGE SUIVANTE ET RÉCUPÉRER LE CONTENU DE CETTE BALISE #####
+
+def CheckNextPage(page):  
+    page_content = BeautifulSoup(page.text, "html.parser")
+    next_link = page_content.find(class_ = "next")
+    if next_link != None:
+        for a in next_link.find_all("a", href = True):
+            next_page = a["href"]
+        next_page_content = str(next_page).replace('<a href="', "").replace('">next</a>', "")
+    else:
+        next_page_content = "404"
+    return next_page_content
 
 ##### FONCTION POUR CREER UN FICHIER CSV AVEC LE NOM DE LA CATEGORIE, Y AJOUTER LES ENTETES ET ECRIRE LES INFORMATIONS DANS LE FICHIER ###
 
-def write_in_csv (category, informations_livre):
+def WriteInCsv (category, informations_livre):
     
     file_name = str(category)
     #Créer une liste avec les entêtes suivantes : [”product_page_url”, “universal_ product_code (upc)”, “title, price_including_tax”, “price_excluding_tax”, “product_description”, “category”, “review_rating”, “image_url”]
@@ -81,69 +94,38 @@ def write_in_csv (category, informations_livre):
         liste_csv.append(informations_livre)
         writer.writerows(liste_csv)
     #Enregistrer et fermer le fichier CSV
- 
-urls = [] #Création d'une liste pour récupérer les URL de la page
-url_livre = "https://books.toscrape.com/catalogue/soumission_998/index.html"
-soup = make_the_soup(url_livre)
-informations_livre  = scrap_my_book(url_livre, soup)[0]
-category = scrap_my_book(url_livre,soup)[1]
-write_in_csv(category, informations_livre)
 
+##### FAIRE LA LISTE DES LIVRES SUR LA PAGE #####
 
+def FindAllBooks(url, page):
+    links = []
+    while page.ok:
+        page = requests.get(url)
+        #Parcourir la page
+        soup = BeautifulSoup(page.text, 'html.parser')
+        product_pods = soup.find_all(class_="product_pod")
+        for product_pod in product_pods:
+            a = product_pod.find("a")
+            link = urljoin(url, a["href"])
+            links.append(link)
+            with open('liste_livres.txt', 'w', encoding='UTF-8') as f:
+                writer = csv.writer(f)
+                writer.writerow(links)
+                print("Nombre de livre trouvés : " + str(len(links)))
+        next_page_content = CheckNextPage(page)
+        url = urljoin(url, next_page_content)
+    return links
 
+links = [] #Création d'une liste pour récupérer les URL de la page
+url = "https://books.toscrape.com/catalogue/category/books/nonfiction_13/index.html"
+page = requests.get(url)
+links = FindAllBooks(url, page)
+for link in links:
+    informations_livre, category = ScrapMyBook(link)
+    WriteInCsv(category, informations_livre)
 
-# Récupérer toutes les URL des produits via BeautifulSoup 
-# Faire une requête Get pour obtenir le code HTML des pages suivantes si il y a
-
-# Récupérez toutes les URL des pages suivantes de la catégorie
-# Stocker les URL dans une liste (liste_livre)
-
-#Récupération de tous les liens
-
-links = []
-
-# for link in soup.find_all('a'):
-#     #print(link.get('href'))
-#     urls.append(link)
-#     print(link)
-# # list = soup.find_all(class_="table table-striped")
-# # print(list)
 
 #À partir d’une URL, faire une requête Get pour obtenir le code HTML de la page
-
-url = "https://books.toscrape.com/catalogue/category/books/romance_8/index.html"
-page = requests.get(url)
-i = 0
-
-
-#FAIRE LA LISTE DES LIVRES SUR LE PAGE TODO: PARCOURIR LES PAGES
-while page.ok:
-    page = requests.get(url)
-    #Parcourir la page
-    soup = BeautifulSoup(page.text, 'html.parser')
-    product_pods = soup.find_all(class_="product_pod")
-    # pager = soup.find(class_ = "next")[]
-    # print(pager)
-    # href_tags = soup.find_all(href=True)
-    # print(href_tags)
-    # next_link = href_tags[0]
-    # print(next_link)
-    for product_pod in product_pods:
-        a = product_pod.find("a")
-        link = a["href"]
-        links.append("https://books.toscrape.com/catalogue/" + link + "\n")
-        with open('liste_livres.txt', 'w', encoding='UTF-8') as f:
-            writer = csv.writer(f)
-            writer.writerow(links)
-    #print("Scraping des liens en cours ... \n page " + str(i))
-    i = i + 1
-
-    # a = pager.find("a")
-    # next_link = a["href"]
-    # print(next_link)
-    url = "http://books.toscrape.com/catalogue/category/books/page-" + str(i) + ".html" 
-
-
 
 # # Pour chaque élement de la liste (liste_livre), récupérer la page HTML
 # # Créer les liste suivantes :
