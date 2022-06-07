@@ -5,16 +5,27 @@ from urllib.parse import urljoin
 
 ##### FONCTION POUR FAIRE UNE REQUETE GET POUR OBTENIR LE CODE HTML DE LA PAGE #####
 
-# def MakeTheSoup(url_livre):
-#     # url_website = url_livre
-#     html_livre = requests.get(url_livre).text
-#     soup = BeautifulSoup(html_livre, 'html.parser')
-#     return soup
+def MakeTheSoup(url_livre):
+    # url_website = url_livre
+    html_livre = requests.get(url_livre).text
+    soup = BeautifulSoup(html_livre, 'html.parser')
+    return soup
+
+##### FONCTION POUR TROUVER TOUTES LES CATEGORIES ET ENREGISTRER LES URLS DE CHAQUE CATEGORIE DANS UNE LISTE #####
+def FindAllCategories(url, page):
+    list_of_categories = []
+    page = requests.get(url)
+    #Parcourir la page
+    soup = BeautifulSoup(page.text, 'html.parser')
+    nav_list = soup.find(class_="nav nav-list").find_all("a", href = True)
+    for a in nav_list:
+        a = urljoin(url, a["href"])
+        list_of_categories.append(a)
+    return list_of_categories
 
 ##### FONCTION POUR SCRAPER LA PAGE D'UN LIVRE #####
 
 def ScrapMyBook (url_livre, soup=None):
-    """test"""
     #Pour chaque URL de liste livre, utiliser BeautifulSoup pour extraire les données et les stocker dans les listes
     tableau_livre = []
     html_livre = requests.get(url_livre).text
@@ -58,6 +69,7 @@ def ScrapMyBook (url_livre, soup=None):
     image_livre = soup_livre.select("div img")
     image_url = url_livre + image_livre[0]["src"]
     download_image = requests.get(image_url).content
+    
     with open("test_img.jpg", "wb") as handler:
         handler.write(download_image)
 
@@ -80,18 +92,17 @@ def CheckNextPage(page):
 
 ##### FONCTION POUR CREER UN FICHIER CSV AVEC LE NOM DE LA CATEGORIE, Y AJOUTER LES ENTETES ET ECRIRE LES INFORMATIONS DANS LE FICHIER ###
 
-def WriteInCsv (category, informations_livre):
-    
+def WriteInCsv (entetes, category, all_books_informations):
     file_name = str(category)
     #Créer une liste avec les entêtes suivantes : [”product_page_url”, “universal_ product_code (upc)”, “title, price_including_tax”, “price_excluding_tax”, “product_description”, “category”, “review_rating”, “image_url”]
-    liste_csv = []
-    entetes = ["product_page_url", "universal_product_code (upc)", "title", "price_including_tax", "price_excluding_tax", "product_description", "category", "review_rating", "image_url"]
-    
-    #Ouvrir un fichier CSV, y importer les entêtes et les informations dans des colonnes différentes
-    with open(file_name + '.csv', 'w', encoding='UTF-8') as f:
-        writer = csv.writer(f)
-        liste_csv.append(entetes)
+    # entetes = ["product_page_url", "universal_product_code (upc)", "title", "price_including_tax", "price_excluding_tax", "product_description", "category", "review_rating", "image_url"]
+    liste_csv = []        
+    liste_csv.append(entetes)
+    for informations_livre in all_books_informations:
         liste_csv.append(informations_livre)
+    #Ouvrir un fichier CSV, y importer les entêtes et les informations dans des colonnes différentes
+    with open(file_name + '.csv', 'a', encoding='UTF-8', newline = "") as f:
+        writer = csv.writer(f)
         writer.writerows(liste_csv)
     #Enregistrer et fermer le fichier CSV
 
@@ -116,27 +127,23 @@ def FindAllBooks(url, page):
         url = urljoin(url, next_page_content)
     return links
 
+
+url = "http://books.toscrape.com/catalogue/category/books_1/index.html"
+categories = []
 links = [] #Création d'une liste pour récupérer les URL de la page
-url = "https://books.toscrape.com/catalogue/category/books/nonfiction_13/index.html"
+# all_links = []
+all_books_informations = []
 page = requests.get(url)
-links = FindAllBooks(url, page)
-for link in links:
-    informations_livre, category = ScrapMyBook(link)
-    WriteInCsv(category, informations_livre)
+categories = FindAllCategories(url, page)
+for category in categories:
+    links = FindAllBooks(category, page)
+    print(links)
+    for link in links:
+        informations_livre, category = ScrapMyBook(link)
+        all_books_informations.append(informations_livre)
+        print(link)
+    # all_links.append(links)
+        entetes = ["product_page_url", "universal_product_code (upc)", "title", "price_including_tax", "price_excluding_tax", "product_description", "category", "review_rating", "image_url"]
+        WriteInCsv(entetes, category, all_books_informations)
 
-
-#À partir d’une URL, faire une requête Get pour obtenir le code HTML de la page
-
-# # Pour chaque élement de la liste (liste_livre), récupérer la page HTML
-# # Créer les liste suivantes :
-
-# - product_pageurl
-# - universal product_code (upc)
-# - title
-# - price_including_tax
-# - price_excluding_tax
-# - number_available
-# - product_description
-# - category
-# - review_rating
-# - image_url
+    
