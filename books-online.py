@@ -65,6 +65,7 @@ def scrap_my_book (url_livre, soup=None):
     #Title
     title = soup_livre.find(class_="col-sm-6 product_main")
     title = title.find('h1').string
+    title = str(title)
 
     #Category
     list_a = []
@@ -95,10 +96,11 @@ def scrap_my_book (url_livre, soup=None):
 
     #Extraction de l'URL de l'image
     image_livre = soup_livre.select("div img")
-    image_url = url_livre + image_livre[0]["src"]
+    image_url = urljoin(url_livre, image_livre[0]["src"])
+    # image_url = url_livre + image_livre[0]["src"]
     download_image = requests.get(image_url).content
     
-    with open("test_img.jpg", "wb") as handler:
+    with open(title + ".jpg", "wb") as handler:
         handler.write(download_image)
 
     informations_livre = [product_page_url, universal_product_code, title, price_including_tax, price_excluding_tax, product_description, category, review_rating, image_url]
