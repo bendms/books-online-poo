@@ -5,14 +5,31 @@ from urllib.parse import urljoin
 
 ##### FONCTION POUR FAIRE UNE REQUETE GET POUR OBTENIR LE CODE HTML DE LA PAGE #####
 
-def MakeTheSoup(url_livre):
-    # url_website = url_livre
+def make_the_soup(url_livre):
+    """Return soup object from url_livre parameter
+
+    Args:
+        url_livre (string): URL of website we want to scrap
+
+    Returns:
+        soup (bs4): Return soup object with informations from HTML page
+    """
     html_livre = requests.get(url_livre).text
     soup = BeautifulSoup(html_livre, 'html.parser')
     return soup
 
 ##### FONCTION POUR TROUVER TOUTES LES CATEGORIES ET ENREGISTRER LES URLS DE CHAQUE CATEGORIE DANS UNE LISTE #####
-def FindAllCategories(url, page):
+
+def find_all_categories(url, page):
+    """Return all categories of books from website with ahref tags in HTML page
+
+    Args:
+        url (string): URL of website we want to scrap
+        page (requests.models.Response): Status code for a HTTP request from server
+
+    Returns:
+        list_of_categories (list): list of all categories in the website
+    """
     list_of_categories = []
     page = requests.get(url)
     #Parcourir la page
@@ -26,7 +43,17 @@ def FindAllCategories(url, page):
 
 ##### FONCTION POUR SCRAPER LA PAGE D'UN LIVRE #####
 
-def ScrapMyBook (url_livre, soup=None):
+def scrap_my_book (url_livre, soup=None):
+    """Functions return list with all requested informations from specific book page and category of this books
+
+    Args:
+        url_livre (string): URL of website we want to scrap
+        soup (bs4): Return soup object with informations from HTML page
+
+    Returns:
+        informations_livre (list): list of following informations from page : product_page_url, universal_product_code, title, price_including_tax, price_excluding_tax, product_description, category, review_rating, image_url 
+        category (string): string from which category this books belong
+    """
     #Pour chaque URL de liste livre, utiliser BeautifulSoup pour extraire les données et les stocker dans les listes
     tableau_livre = []
     html_livre = requests.get(url_livre).text
@@ -80,7 +107,15 @@ def ScrapMyBook (url_livre, soup=None):
 
 ##### VÉRIFIER SI LA PAGE EN COURS POSSÈDE UN BOUTON PAGE SUIVANTE ET RÉCUPÉRER LE CONTENU DE CETTE BALISE #####
 
-def CheckNextPage(page):  
+def check_next_page(page):  
+    """Check if there is a next page button / link from specific page with HTML tag
+
+    Args:
+        page (requests.models.Response): Status code for a HTTP request from server
+
+    Returns:
+        next_page_content (string): url of next page
+    """
     page_content = BeautifulSoup(page.text, "html.parser")
     next_link = page_content.find(class_ = "next")
     if next_link != None:
@@ -93,7 +128,14 @@ def CheckNextPage(page):
 
 ##### FONCTION POUR CREER UN FICHIER CSV AVEC LE NOM DE LA CATEGORIE, Y AJOUTER LES ENTETES ET ECRIRE LES INFORMATIONS DANS LE FICHIER ###
 
-def WriteInCsv (entetes, category, all_books_informations):
+def write_in_csv (entetes, category, all_books_informations):
+    """create a csv file and named it with category name, write informations of these books from a list and close the file
+
+    Args:
+        entetes (list): list of headers shown in csv file
+        category (string): category of books we want to write in csv file, also string for naming the file
+        all_books_informations (list): list of list of all books informations scrapped before
+    """
     file_name = str(category)
     #Créer une liste avec les entêtes suivantes : [”product_page_url”, “universal_ product_code (upc)”, “title, price_including_tax”, “price_excluding_tax”, “product_description”, “category”, “review_rating”, “image_url”]
     # entetes = ["product_page_url", "universal_product_code (upc)", "title", "price_including_tax", "price_excluding_tax", "product_description", "category", "review_rating", "image_url"]
@@ -111,6 +153,15 @@ def WriteInCsv (entetes, category, all_books_informations):
 ##### FAIRE LA LISTE DES LIVRES SUR LA PAGE #####
 
 def FindAllBooks(url, page):
+    """find all books from an url, this functions will find books from next pages if they exist
+
+    Args:
+        url (string): URL of website we want to scrap
+        page (requests.models.Response): Status code for a HTTP request from server
+
+    Returns:
+        links (list): list of all url find in all pages of the category
+    """
     links = []
     while page.ok:
         page = requests.get(url)
@@ -125,7 +176,7 @@ def FindAllBooks(url, page):
                 writer = csv.writer(f)
                 writer.writerow(links)
                 print("Nombre de livre trouvés : " + str(len(links)))
-        next_page_content = CheckNextPage(page)
+        next_page_content = check_next_page(page)
         url = urljoin(url, next_page_content)
     return links
 
@@ -136,17 +187,15 @@ links = []
 all_books_informations = []
 list_of_all_books_informations = []
 page = requests.get(url)
-categories = FindAllCategories(url, page)
+categories = find_all_categories(url, page)
 i = 0
 for category in categories:
     links = FindAllBooks(category, page)
     for link in links:
-        informations_livre, category = ScrapMyBook(link)
+        informations_livre, category = scrap_my_book(link)
         all_books_informations.append(informations_livre)
         list_of_all_books_informations.append(all_books_informations)
         # all_links.append(links)
         entetes = ["product_page_url", "universal_product_code (upc)" , "title", "price_including_tax", "price_excluding_tax", "product_description", "category", "review_rating", "image_url"]
-    WriteInCsv(entetes, category, list_of_all_books_informations[i])
+    write_in_csv(entetes, category, list_of_all_books_informations[i])
     i = i + 1
-
-    
