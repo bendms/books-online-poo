@@ -21,6 +21,7 @@ def FindAllCategories(url, page):
     for a in nav_list:
         a = urljoin(url, a["href"])
         list_of_categories.append(a)
+    list_of_categories.pop(0)
     return list_of_categories
 
 ##### FONCTION POUR SCRAPER LA PAGE D'UN LIVRE #####
@@ -99,12 +100,13 @@ def WriteInCsv (entetes, category, all_books_informations):
     liste_csv = []        
     liste_csv.append(entetes)
     for informations_livre in all_books_informations:
-        liste_csv.append(informations_livre)
+        if informations_livre[6] == category:
+            liste_csv.append(informations_livre)
+    print(liste_csv)
     #Ouvrir un fichier CSV, y importer les entêtes et les informations dans des colonnes différentes
     with open(file_name + '.csv', 'a', encoding='UTF-8', newline = "") as f:
         writer = csv.writer(f)
         writer.writerows(liste_csv)
-    #Enregistrer et fermer le fichier CSV
 
 ##### FAIRE LA LISTE DES LIVRES SUR LA PAGE #####
 
@@ -130,20 +132,21 @@ def FindAllBooks(url, page):
 
 url = "http://books.toscrape.com/catalogue/category/books_1/index.html"
 categories = []
-links = [] #Création d'une liste pour récupérer les URL de la page
-# all_links = []
+links = [] 
 all_books_informations = []
+list_of_all_books_informations = []
 page = requests.get(url)
 categories = FindAllCategories(url, page)
+i = 0
 for category in categories:
     links = FindAllBooks(category, page)
-    print(links)
     for link in links:
         informations_livre, category = ScrapMyBook(link)
         all_books_informations.append(informations_livre)
-        print(link)
-    # all_links.append(links)
-        entetes = ["product_page_url", "universal_product_code (upc)", "title", "price_including_tax", "price_excluding_tax", "product_description", "category", "review_rating", "image_url"]
-        WriteInCsv(entetes, category, all_books_informations)
+        list_of_all_books_informations.append(all_books_informations)
+        # all_links.append(links)
+        entetes = ["product_page_url", "universal_product_code (upc)" , "title", "price_including_tax", "price_excluding_tax", "product_description", "category", "review_rating", "image_url"]
+    WriteInCsv(entetes, category, list_of_all_books_informations[i])
+    i = i + 1
 
     
