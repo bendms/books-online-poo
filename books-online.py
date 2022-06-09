@@ -2,6 +2,7 @@ from bs4 import BeautifulSoup
 import requests
 import csv
 from urllib.parse import urljoin
+import re
 
 ##### FONCTION POUR FAIRE UNE REQUETE GET POUR OBTENIR LE CODE HTML DE LA PAGE #####
 
@@ -99,11 +100,13 @@ def scrap_my_book (url_livre, soup=None):
     image_url = urljoin(url_livre, image_livre[0]["src"])
     # image_url = url_livre + image_livre[0]["src"]
     download_image = requests.get(image_url).content
-    
-    with open(title + ".jpg", "wb") as handler:
-        handler.write(download_image)
 
     informations_livre = [product_page_url, universal_product_code, title, price_including_tax, price_excluding_tax, product_description, category, review_rating, image_url]
+    
+    name_my_image_without_special_characters = re.sub('[^a-zA-Z0-9 \n\.]', '', title)
+    with open(name_my_image_without_special_characters + ".jpg", "wb+") as handler:
+        handler.write(download_image)
+
     
     return informations_livre, category
 
