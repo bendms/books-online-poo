@@ -4,21 +4,6 @@ import csv
 from urllib.parse import urljoin
 import re
 
-##### FONCTION POUR FAIRE UNE REQUETE GET POUR OBTENIR LE CODE HTML DE LA PAGE #####
-
-def make_the_soup(url_livre):
-    """Return soup object from url_livre parameter
-
-    Args:
-        url_livre (string): URL of website we want to scrap
-
-    Returns:
-        soup (bs4): Return soup object with informations from HTML page
-    """
-    html_livre = requests.get(url_livre).text
-    soup = BeautifulSoup(html_livre, 'html.parser')
-    return soup
-
 ##### FONCTION POUR TROUVER TOUTES LES CATEGORIES ET ENREGISTRER LES URLS DE CHAQUE CATEGORIE DANS UNE LISTE #####
 
 def find_all_categories(url, page):
@@ -104,7 +89,7 @@ def scrap_my_book (url_livre, soup=None):
     informations_livre = [product_page_url, universal_product_code, title, price_including_tax, price_excluding_tax, product_description, category, review_rating, image_url]
     
     name_my_image_without_special_characters = re.sub('[^a-zA-Z0-9 \n\.]', '', title)
-    with open(name_my_image_without_special_characters + ".jpg", "wb+") as handler:
+    with open(name_my_image_without_special_characters + ".jpg", "wb") as handler:
         handler.write(download_image)
 
     
@@ -149,7 +134,6 @@ def write_in_csv (entetes, category, all_books_informations):
     for informations_livre in all_books_informations:
         if informations_livre[6] == category:
             liste_csv.append(informations_livre)
-    print(liste_csv)
     #Ouvrir un fichier CSV, y importer les entêtes et les informations dans des colonnes différentes
     with open(file_name + '.csv', 'a', encoding='UTF-8', newline = "") as f:
         writer = csv.writer(f)
@@ -177,12 +161,9 @@ def FindAllBooks(url, page):
             a = product_pod.find("a")
             link = urljoin(url, a["href"])
             links.append(link)
-            with open('liste_livres.txt', 'w', encoding='UTF-8') as f:
-                writer = csv.writer(f)
-                writer.writerow(links)
-                print("Nombre de livre trouvés : " + str(len(links)))
         next_page_content = check_next_page(page)
         url = urljoin(url, next_page_content)
+    print("Nombre de livre trouvés dans la catégorie : " + str(len(links)))
     return links
 
 
