@@ -5,7 +5,7 @@
 
 ## Review : 
 
-This is my first Python projet for OpenClassRooms courses. 
+This is my first Python project for OpenClassRooms courses. 
 
 In this scenario we work for an online library and we need to create a script which scan and extract a competitor website to find informations about their books. 
 
