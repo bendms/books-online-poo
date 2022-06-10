@@ -7,9 +7,9 @@
 
 This is my first Python projet for OpenClassRooms courses. 
 
-In this scenario we work for an online librairy and we need to create a script which scrap a competitor website to find informations about their books. 
+In this scenario we work for an online library and we need to create a script which scan and extract a competitor website to find informations about their books. 
 
-This script will automatically scrap their website from an URL. Find all the categories, find all the books in these categories and create a CSV file for each of them. 
+This script will automatically scan their website from an URL. Find all the categories, find all the books in these categories and create a CSV file for each of them. 
 
 Also, this script will download all cover pictures in .jpg format. 
 
@@ -34,7 +34,7 @@ python books-online.py
 ```
 ## How to Contribute
 
-This script takes time to be executed. Find ways to improve performances : 
+This script takes time to be executed. It would be interesting to find a way to improve the execution speed : 
 
 - Use multithreading
 - Use LXML or CSS attribute to find HTML tags
