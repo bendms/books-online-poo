@@ -22,6 +22,7 @@ This script needs Python installed and some packages detailled in requirements.t
 ```bash
 git clone https://github.com/bendms/books-online.git
 ```
+
 ## Configuration : 
 
 1. Install packages from requirements.txt
@@ -30,8 +31,14 @@ pip install -r requirements.txt
 ```
 2. Run the script using Python commande in terminal : 
 ```bash
-python books-online.py
+python main.py
 ```
+
+3. You can use the 'time' command if you want to know how long the program takes to run
+```bash
+time python main.py
+```   
+
 ## How to Contribute
 
 This script takes time to be executed. It would be interesting to find a way to improve the execution speed : 
