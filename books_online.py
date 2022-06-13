@@ -169,7 +169,7 @@ def find_all_books(url, page):
             links.append(link)
         next_page_content = check_next_page(page)
         url = urljoin(url, next_page_content)
-    print("Nombre de livre trouvés dans la catégorie : " + str(len(links)))
+    print("Nombre de livre(s) trouvé(s) dans la catégorie : " + str(len(links)))
     return links
 
 
