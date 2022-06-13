@@ -3,6 +3,7 @@ import requests
 import csv
 from urllib.parse import urljoin
 import re
+import os
 
 ##### FONCTION POUR TROUVER TOUTES LES CATEGORIES ET ENREGISTRER LES URLS DE CHAQUE CATEGORIE DANS UNE LISTE #####
 
@@ -88,11 +89,14 @@ def scrap_my_book (url_livre, soup=None):
 
     informations_livre = [product_page_url, universal_product_code, title, price_including_tax, price_excluding_tax, product_description, category, review_rating, image_url]
     
-    name_my_image_without_special_characters = re.sub('[^a-zA-Z0-9 \n\.]', '', title)
-    with open(name_my_image_without_special_characters + ".jpg", "wb") as handler:
-        handler.write(download_image)
-
+    name_my_image_without_special_characters = re.sub('[^\w \n\.]', '', title)
     
+    if not os.path.exists("images"):
+        os.makedirs("images")
+    with open("images/" + name_my_image_without_special_characters + ".jpg", "wb+") as handler:
+        handler.write(download_image)
+    
+        
     return informations_livre, category
 
 ##### VÉRIFIER SI LA PAGE EN COURS POSSÈDE UN BOUTON PAGE SUIVANTE ET RÉCUPÉRER LE CONTENU DE CETTE BALISE #####
@@ -134,14 +138,16 @@ def write_in_csv (entetes, category, all_books_informations):
     for informations_livre in all_books_informations:
         if informations_livre[6] == category:
             liste_csv.append(informations_livre)
+    if not os.path.exists("datas"):
+        os.makedirs("datas")
     #Ouvrir un fichier CSV, y importer les entêtes et les informations dans des colonnes différentes
-    with open(file_name + '.csv', 'a', encoding='UTF-8', newline = "") as f:
+    with open("datas/" + file_name + '.csv', 'w', encoding='UTF-8', newline = "") as f:
         writer = csv.writer(f)
         writer.writerows(liste_csv)
 
 ##### FAIRE LA LISTE DES LIVRES SUR LA PAGE #####
 
-def FindAllBooks(url, page):
+def find_all_books(url, page):
     """find all books from an url, this functions will find books from next pages if they exist
 
     Args:
@@ -176,7 +182,7 @@ page = requests.get(url)
 categories = find_all_categories(url, page)
 i = 0
 for category in categories:
-    links = FindAllBooks(category, page)
+    links = find_all_books(category, page)
     for link in links:
         informations_livre, category = scrap_my_book(link)
         all_books_informations.append(informations_livre)
