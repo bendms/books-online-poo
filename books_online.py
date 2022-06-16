@@ -172,22 +172,21 @@ def find_all_books(url, page):
     print("Nombre de livre(s) trouvé(s) dans la catégorie : " + str(len(links)))
     return links
 
-
-url = "http://books.toscrape.com/catalogue/category/books_1/index.html"
-categories = []
-links = [] 
-all_books_informations = []
-list_of_all_books_informations = []
-page = requests.get(url)
-categories = find_all_categories(url, page)
-i = 0
-for category in categories:
-    links = find_all_books(category, page)
-    for link in links:
-        informations_livre, category = scrap_my_book(link)
-        all_books_informations.append(informations_livre)
-        list_of_all_books_informations.append(all_books_informations)
-        # all_links.append(links)
-        entetes = ["product_page_url", "universal_product_code (upc)" , "title", "price_including_tax", "price_excluding_tax", "product_description", "category", "review_rating", "image_url"]
-    write_in_csv(entetes, category, list_of_all_books_informations[i])
-    i = i + 1
+def main(url):
+    categories = []
+    links = [] 
+    all_books_informations = []
+    list_of_all_books_informations = []
+    page = requests.get(url)
+    categories = find_all_categories(url, page)
+    i = 0
+    for category in categories:
+        links = find_all_books(category, page)
+        for link in links:
+            informations_livre, category = scrap_my_book(link)
+            all_books_informations.append(informations_livre)
+            list_of_all_books_informations.append(all_books_informations)
+            # all_links.append(links)
+            entetes = ["product_page_url", "universal_product_code (upc)" , "title", "price_including_tax", "price_excluding_tax", "product_description", "category", "review_rating", "image_url"]
+        write_in_csv(entetes, category, list_of_all_books_informations[i])
+        i = i + 1
