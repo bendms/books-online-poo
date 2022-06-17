@@ -43,7 +43,7 @@ def scrap_my_book (url_livre, soup=None):
     """
     #Pour chaque URL de liste livre, utiliser BeautifulSoup pour extraire les données et les stocker dans les listes
     tableau_livre = []
-    html_livre = requests.get(url_livre).text
+    html_livre = requests.get(url_livre).content
     soup_livre = BeautifulSoup(html_livre, 'html.parser')
   
     #URL Livre 
@@ -64,7 +64,8 @@ def scrap_my_book (url_livre, soup=None):
     description_class_search = soup_livre.find(class_="product_page")
     children_product_page = description_class_search.findChildren('p', recursive = False)
     description_livre_clean_tag = str(children_product_page).replace("<p>", "")
-    product_description = str(description_livre_clean_tag).replace("</p>", "")
+    product_description_with_special_character = str(description_livre_clean_tag).replace("</p>", "")
+    product_description = re.sub('[^\w \n\.]', '', product_description_with_special_character)
 
     #Review_rating 
     review_livre = soup_livre.find(class_="col-sm-6 product_main")
@@ -73,13 +74,17 @@ def scrap_my_book (url_livre, soup=None):
     children_review_livre_2 = str(children_review_livre).replace('<p class="star-rating ', "")
     review_rating = children_review_livre_2.replace('"></p>', "")
 
-    #Extraction des données du tableau (UPC, Price excluding taxe, Price including tax, Number available)
+    #Extraction des données du tableau (UPC, Price excluding taxe, Price including tax)
     for td in soup_livre.find_all('td'):
         tableau_livre.append(td.string)
     universal_product_code = tableau_livre[0]
-    price_excluding_tax = tableau_livre[2]
-    price_including_tax = tableau_livre[3]
-    number_available = tableau_livre[5]
+    price_excluding_tax = tableau_livre[2].replace("Â", "")
+    price_including_tax = tableau_livre[3].replace("Â", "")
+    
+    #Extraction du nombre de produits disponibles (Number available)
+    check_number_available = soup_livre.find(class_="instock availability").getText()
+    check_space_before_number_available = check_number_available.replace("\n\n    \n        ", "")
+    number_available = check_space_before_number_available.replace("\n    \n", "")
 
     #Extraction de l'URL de l'image
     image_livre = soup_livre.select("div img")
@@ -87,7 +92,7 @@ def scrap_my_book (url_livre, soup=None):
     # image_url = url_livre + image_livre[0]["src"]
     download_image = requests.get(image_url).content
 
-    informations_livre = [product_page_url, universal_product_code, title, price_including_tax, price_excluding_tax, product_description, category, review_rating, image_url]
+    informations_livre = [product_page_url, universal_product_code, title, price_including_tax, price_excluding_tax, number_available, product_description, category, review_rating, image_url]
     
     name_my_image_without_special_characters = re.sub('[^\w \n\.]', '', title)
     
@@ -136,7 +141,7 @@ def write_in_csv (entetes, category, all_books_informations):
     liste_csv = []        
     liste_csv.append(entetes)
     for informations_livre in all_books_informations:
-        if informations_livre[6] == category:
+        if informations_livre[7] == category:
             liste_csv.append(informations_livre)
     if not os.path.exists("datas"):
         os.makedirs("datas")
@@ -187,6 +192,6 @@ def main(url):
             all_books_informations.append(informations_livre)
             list_of_all_books_informations.append(all_books_informations)
             # all_links.append(links)
-            entetes = ["product_page_url", "universal_product_code (upc)" , "title", "price_including_tax", "price_excluding_tax", "product_description", "category", "review_rating", "image_url"]
+            entetes = ["product_page_url", "universal_product_code (upc)" , "title", "price_including_tax", "price_excluding_tax", "number_available", "product_description", "category", "review_rating", "image_url"]
         write_in_csv(entetes, category, list_of_all_books_informations[i])
         i = i + 1
